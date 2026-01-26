@@ -6,6 +6,7 @@ import json
 
 
 # ============ Transcript Operations ============
+#here are the transcript operations....
 
 def create_transcript(
     db: Session,
@@ -204,4 +205,5 @@ def get_statistics(db: Session) -> dict:
         "total_lessons": total_lessons,
         "total_sessions": total_sessions,
         "subjects_distribution": dict(subjects)
+
     }
