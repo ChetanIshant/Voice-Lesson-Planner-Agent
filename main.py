@@ -8,6 +8,7 @@ import re
 from datetime import datetime
 from typing import Optional
 from urllib.parse import quote_plus
+from pathlib import Path
 
 import requests
 from fastapi import FastAPI, Request, HTTPException
@@ -84,7 +85,23 @@ conversation_states = {}
 # ============================================================
 # Links
 # ============================================================
+BASE_DIR = Path(__file__).resolve().parent
 
+def load_homepage():
+    template_path = BASE_DIR / "templates" / "index_final.html"
+    if template_path.exists():
+        return template_path.read_text(encoding="utf-8")
+    return """
+    <html>
+        <head><title>NCERT Lesson Plan Generator</title></head>
+        <body>
+            <h1>NCERT Lesson Plan Generator with Worksheets</h1>
+            <p>Service is running successfully.</p>
+            <p>Use the API or Socket.IO frontend to interact with the app.</p>
+        </body>
+    </html>
+    """
+    
 def generate_cbse_youtube_links(topic: str, subject: str, class_level: str) -> list:
     """Generate ONLY topic-specific CBSE/NCERT-related YouTube search links."""
     class_num = class_level.replace("Class ", "").strip()
@@ -255,11 +272,7 @@ PROMPTS = {
 
 
 def get_db():
-    db = SessionLocal()
-    try:
-        return db
-    finally:
-        pass
+    return SessionLocal()
 
 
 # ============================================================
@@ -1277,9 +1290,7 @@ def create_pdf_lesson_plan(lesson_data: dict, topic: str) -> io.BytesIO:
 
 @app.get("/", response_class=HTMLResponse)
 async def index():
-    with open("templates/index_final.html", "r", encoding="utf-8") as f:
-        return f.read()
-
+    return HTMLResponse(content=load_homepage())
 
 @app.get("/mcp/health")
 async def mcp_health():
@@ -1703,11 +1714,13 @@ async def voicemessage(sid, data):
 if __name__ == "__main__":
     import uvicorn
 
+    port = int(os.getenv("PORT", 5000))
+
     print("=" * 60)
     print("🚀 NCERT Lesson Plan Generator with Worksheets")
     print("=" * 60)
-    print("🌐 Open: http://localhost:5000")
-    print("🔧 MCP Health: http://localhost:5000/mcp/health")
+    print(f"🌐 Open: http://localhost:{port}")
+    print(f"🔧 MCP Health: http://localhost:{port}/mcp/health")
     print("=" * 60)
 
-    uvicorn.run("main:socket_app", host="0.0.0.0", port=5000, reload=True)
+    uvicorn.run("main:socket_app", host="0.0.0.0", port=port, reload=False)
